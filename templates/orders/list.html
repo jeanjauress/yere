@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% load market %}
+{% block title %}{% if mode == "sales" %}Mes ventes{% else %}Mes achats{% endif %} — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container mt-3">
+  <ul class="nav nav-pills mb-3">
+    <li class="nav-item"><a class="nav-link {% if mode == 'purchases' %}active bg-brand{% endif %}" href="{% url 'orders:purchases' %}">Mes achats</a></li>
+    <li class="nav-item"><a class="nav-link {% if mode == 'sales' %}active bg-brand{% endif %}" href="{% url 'orders:sales' %}">Mes ventes</a></li>
+  </ul>
+  {% if mode == "sales" %}<div class="scroll-x d-flex gap-2 mb-3"><a class="cat-pill {% if not status %}active{% endif %}" href="?">Toutes</a>{% for v, l in statuses %}<a class="cat-pill {% if status == v %}active{% endif %}" href="?statut={{ v }}">{{ l }}</a>{% endfor %}</div>{% endif %}
+  <div class="list-group">
+    {% for o in page %}
+    <a href="{{ o.get_absolute_url }}" class="list-group-item list-group-item-action">
+      <div class="d-flex justify-content-between flex-wrap"><strong>{{ o.order_number }}</strong><span class="fw-semibold">{{ o.total_amount|xof }}</span></div>
+      <div class="small text-muted">{{ o.created_at|date:"d/m/Y H:i" }} · {% if mode == "sales" %}acheteur {{ o.buyer.username }}{% else %}vendeur {{ o.seller.username }}{% endif %} · {% for it in o.items.all %}{{ it.title }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+      <span class="badge text-bg-light">{{ o.get_status_display }}</span> <span class="badge text-bg-light">{{ o.get_payment_status_display }}</span>
+    </a>
+    {% empty %}<div class="list-group-item text-muted">Aucune commande.</div>{% endfor %}
+  </div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

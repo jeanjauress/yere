@@ -1,0 +1,8 @@
+{% extends "accounts/auth_base.html" %}
+{% block title %}{{ title }} — {{ SITE_NAME }}{% endblock %}
+{% block card %}
+<h1 class="h4 fw-bold mb-3">{{ title }}</h1>
+{% if validlink is not False %}
+<form method="post" novalidate>{% csrf_token %}{% include "partials/form_fields.html" %}<button class="btn btn-brand w-100">Valider</button></form>
+{% else %}<p>Ce lien n'est plus valide. <a href="{% url 'accounts:password_reset' %}">Demander un nouveau lien</a>.</p>{% endif %}
+{% endblock %}

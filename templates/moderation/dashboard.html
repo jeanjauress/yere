@@ -1,0 +1,14 @@
+{% extends "moderation/base.html" %}{% load market %}
+{% block admin %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="card stat-card card-body"><div class="small text-muted">Utilisateurs</div><div class="fs-3 fw-bold">{{ stats.users }}</div><div class="small text-muted">+{{ stats.new_users }} sur 30 j</div></div></div>
+  <div class="col-6 col-lg-3"><div class="card stat-card card-body"><div class="small text-muted">Annonces en ligne</div><div class="fs-3 fw-bold">{{ stats.listings }}</div><div class="small text-muted">+{{ stats.new_listings }} sur 30 j</div></div></div>
+  <div class="col-6 col-lg-3"><div class="card stat-card card-body"><div class="small text-muted">Commandes (hors annulées)</div><div class="fs-3 fw-bold">{{ stats.orders }}</div><div class="small text-muted">{{ stats.orders_30 }} sur 30 j · {{ stats.gmv_30|xof }}</div></div></div>
+  <div class="col-6 col-lg-3"><a href="{% url 'moderation:reports' %}" class="card stat-card card-body text-decoration-none"><div class="small text-muted">Signalements à traiter</div><div class="fs-3 fw-bold {% if stats.open_reports %}text-danger{% endif %}">{{ stats.open_reports }}</div><div class="small text-muted">{{ stats.suspended_users }} comptes / {{ stats.suspended_listings }} annonces suspendus</div></a></div>
+</div>
+<div class="row g-4">
+  <div class="col-lg-4"><h2 class="h6 fw-bold">Commandes par statut</h2><ul class="list-group">{% for label, n in by_status %}<li class="list-group-item d-flex justify-content-between"><span>{{ label }}</span><strong>{{ n }}</strong></li>{% empty %}<li class="list-group-item text-muted small">Aucune commande.</li>{% endfor %}</ul></div>
+  <div class="col-lg-4"><h2 class="h6 fw-bold">Derniers signalements</h2><div class="list-group">{% for r in reports %}<a class="list-group-item list-group-item-action small" href="{% url 'moderation:report_detail' r.pk %}"><strong>{{ r.get_reason_display }}</strong> — {% if r.listing %}{{ r.listing.title }}{% else %}@{{ r.reported_user.username }}{% endif %}<br><span class="text-muted">{{ r.created_at|date:"d/m H:i" }}</span></a>{% empty %}<div class="list-group-item text-muted small">Rien à traiter.</div>{% endfor %}</div></div>
+  <div class="col-lg-4"><h2 class="h6 fw-bold">Journal récent</h2><ul class="list-group">{% for l in logs %}<li class="list-group-item small"><code>{{ l.action }}</code> {{ l.target_repr }}<br><span class="text-muted">{{ l.actor.username|default:"système" }} · {{ l.created_at|date:"d/m H:i" }}</span></li>{% empty %}<li class="list-group-item text-muted small">Vide.</li>{% endfor %}</ul></div>
+</div>
+{% endblock %}

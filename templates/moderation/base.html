@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Administration — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container-fluid mt-3 px-lg-4">
+  <ul class="nav nav-pills mb-3 flex-nowrap scroll-x">
+    {% url 'moderation:dashboard' as u %}<li class="nav-item"><a class="nav-link {% if request.path == u %}active bg-brand{% endif %}" href="{{ u }}">Statistiques</a></li>
+    {% url 'moderation:reports' as u %}<li class="nav-item"><a class="nav-link {% if u in request.path %}active bg-brand{% endif %}" href="{{ u }}">Signalements</a></li>
+    {% url 'moderation:listings' as u %}<li class="nav-item"><a class="nav-link {% if u in request.path %}active bg-brand{% endif %}" href="{{ u }}">Annonces</a></li>
+    {% url 'moderation:users' as u %}<li class="nav-item"><a class="nav-link {% if u in request.path %}active bg-brand{% endif %}" href="{{ u }}">Utilisateurs</a></li>
+    {% url 'moderation:orders' as u %}<li class="nav-item"><a class="nav-link {% if u in request.path %}active bg-brand{% endif %}" href="{{ u }}">Commandes</a></li>
+    {% url 'moderation:reviews' as u %}<li class="nav-item"><a class="nav-link {% if u in request.path %}active bg-brand{% endif %}" href="{{ u }}">Avis</a></li>
+    {% url 'moderation:audit' as u %}<li class="nav-item"><a class="nav-link {% if u in request.path %}active bg-brand{% endif %}" href="{{ u }}">Journal</a></li>
+    {% if user.is_superuser or user.role == "admin" %}<li class="nav-item"><a class="nav-link" href="/{{ ADMIN_URL }}">Admin Django <i class="bi bi-box-arrow-up-right"></i></a></li>{% endif %}
+  </ul>
+  {% block admin %}{% endblock %}
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% load market %}
+{% block title %}Mes avis — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container mt-3" style="max-width: 800px">
+  <h1 class="h4 fw-bold mb-3">Mes avis</h1>
+  <h2 class="h6 fw-bold">Avis reçus</h2>
+  {% for r in received %}<div class="border-bottom py-2"><span class="stars">{{ r.rating|stars }}</span> de <strong>{{ r.author.username }}</strong> <span class="small text-muted">{{ r.created_at|date:"d/m/Y" }} · {{ r.order.order_number }}</span>{% if r.is_hidden %} <span class="badge text-bg-secondary">masqué</span>{% endif %}{% if r.comment %}<p class="mb-0">{{ r.comment }}</p>{% endif %}</div>{% empty %}<p class="text-muted small">Aucun avis reçu.</p>{% endfor %}
+  <h2 class="h6 fw-bold mt-4">Avis laissés</h2>
+  {% for r in written %}<div class="border-bottom py-2"><span class="stars">{{ r.rating|stars }}</span> pour <strong>{{ r.seller.username }}</strong> <span class="small text-muted">{{ r.created_at|date:"d/m/Y" }}</span>{% if r.comment %}<p class="mb-0">{{ r.comment }}</p>{% endif %}</div>{% empty %}<p class="text-muted small">Aucun avis laissé.</p>{% endfor %}
+</div>
+{% endblock %}

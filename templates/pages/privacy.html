@@ -1,0 +1,9 @@
+{% extends "pages/page.html" %}{% block title %}Confidentialité — {{ SITE_NAME }}{% endblock %}
+{% block page %}
+<h1 class="h4 fw-bold">Politique de confidentialité</h1>
+<div class="alert alert-warning small">Modèle à compléter (déclaration auprès de l'ARTCI notamment) avant la mise en ligne.</div>
+<h2 class="h6 fw-bold mt-3">Données collectées</h2><p>Identité, e-mail, téléphone, adresse de livraison, annonces, messages échangés sur la plateforme et historique des commandes.</p>
+<h2 class="h6 fw-bold">Finalités</h2><p>Gestion des comptes, mise en relation, exécution des commandes, sécurité et prévention de la fraude.</p>
+<h2 class="h6 fw-bold">Paiements</h2><p>Aucun numéro de carte bancaire ni code Mobile Money n'est collecté ou conservé par {{ SITE_NAME }}.</p>
+<h2 class="h6 fw-bold">Vos droits</h2><p>Vous pouvez accéder à vos données, les rectifier ou demander leur suppression depuis vos paramètres ou en nous <a href="{% url 'contact' %}">contactant</a>.</p>
+{% endblock %}

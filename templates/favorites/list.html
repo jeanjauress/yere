@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Mes favoris — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container mt-3">
+  <h1 class="h4 fw-bold mb-3">Mes favoris</h1>
+  <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-3">
+    {% for f in page %}{% with l=f.listing %}<div class="col">{% include "partials/listing_card.html" %}</div>{% endwith %}
+    {% empty %}<p class="text-muted">Vous n'avez pas encore de favoris. Cliquez sur <i class="bi bi-heart"></i> pour en ajouter.</p>{% endfor %}
+  </div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

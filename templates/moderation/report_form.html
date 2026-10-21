@@ -1,0 +1,7 @@
+{% extends "accounts/auth_base.html" %}
+{% block title %}Signaler — {{ SITE_NAME }}{% endblock %}
+{% block card %}
+<h1 class="h5 fw-bold">Signaler {% if listing %}l'annonce « {{ listing.title }} »{% else %}@{{ reported_user.username }}{% endif %}</h1>
+<form method="post" novalidate>{% csrf_token %}{% include "partials/form_fields.html" %}<button class="btn btn-danger w-100">Envoyer le signalement</button></form>
+<a class="btn btn-link w-100" href="{{ back }}">Annuler</a>
+{% endblock %}

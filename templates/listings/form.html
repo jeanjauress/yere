@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container mt-3" style="max-width: 760px">
+  <h1 class="h4 fw-bold mb-3">{{ title }}</h1>
+  <form method="post" enctype="multipart/form-data" class="card card-body" novalidate>{% csrf_token %}
+    {% if listing and listing.images.exists %}
+    <div class="mb-3"><div class="form-label">Photos actuelles</div>
+      <div class="d-flex flex-wrap gap-2">{% for img in listing.images.all %}
+        <label class="text-center small"><img src="{{ img.image.url }}" class="gallery-thumb d-block mb-1" style="opacity:1" alt=""><input type="checkbox" name="remove_image" value="{{ img.pk }}"> retirer</label>
+      {% endfor %}</div></div>
+    {% endif %}
+    {% include "partials/form_fields.html" %}
+    <div class="d-flex gap-2"><button class="btn btn-brand">Enregistrer</button><a class="btn btn-link" href="{% url 'listings:mine' %}">Annuler</a></div>
+  </form>
+</div>
+{% endblock %}

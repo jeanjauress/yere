@@ -1,0 +1,17 @@
+{% extends "moderation/base.html" %}
+{% block admin %}
+<div class="row g-3" style="max-width: 1000px">
+  <div class="col-md-6"><div class="card card-body">
+    <h1 class="h5 fw-bold">Signalement #{{ report.pk }}</h1>
+    <dl class="small mb-0">
+      <dt>Motif</dt><dd>{{ report.get_reason_display }}</dd>
+      <dt>Précisions</dt><dd>{{ report.details|default:"—"|linebreaksbr }}</dd>
+      <dt>Signalé par</dt><dd>{{ report.reporter.username|default:"—" }} le {{ report.created_at|date:"d/m/Y H:i" }}</dd>
+      {% if report.listing %}<dt>Annonce</dt><dd><a href="{{ report.listing.get_absolute_url }}" target="_blank">{{ report.listing.title }}</a> ({{ report.listing.get_status_display }}) — vendeur @{{ report.listing.seller.username }}</dd>{% endif %}
+      {% if report.reported_user %}<dt>Compte</dt><dd><a href="{% url 'accounts:profile' report.reported_user.username %}" target="_blank">@{{ report.reported_user.username }}</a>{% if report.reported_user.is_suspended %} <span class="badge text-bg-danger">suspendu</span>{% endif %} · {{ report.reported_user.reports_received.count }} signalement(s) au total</dd>{% endif %}
+      <dt>Statut</dt><dd>{{ report.get_status_display }}{% if report.decision %} — {{ report.decision }}{% endif %}</dd>
+    </dl>
+  </div></div>
+  <div class="col-md-6"><form method="post" class="card card-body">{% csrf_token %}<h2 class="h6 fw-bold">Décision</h2>{% include "partials/form_fields.html" %}<button class="btn btn-brand">Appliquer</button></form></div>
+</div>
+{% endblock %}

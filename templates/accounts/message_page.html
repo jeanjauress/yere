@@ -1,0 +1,2 @@
+{% extends "accounts/auth_base.html" %}
+{% block card %}<h1 class="h4 fw-bold mb-3">{{ title }}</h1><p>{{ text }}</p><a class="btn btn-brand" href="{% url 'accounts:login' %}">Connexion</a>{% endblock %}

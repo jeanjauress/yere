@@ -1,0 +1,60 @@
+{% extends "base.html" %}{% load market %}
+{% block title %}Commande {{ order.order_number }} — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container mt-3" style="max-width: 960px">
+  <div class="d-flex justify-content-between flex-wrap align-items-center mb-3">
+    <h1 class="h4 fw-bold mb-0">Commande {{ order.order_number }}</h1>
+    <span class="badge fs-6 {% if order.status == 'cancelled' %}text-bg-danger{% elif order.status == 'delivered' %}text-bg-success{% else %}text-bg-warning{% endif %}">{{ order.get_status_display }}</span>
+  </div>
+  {% if order.status != "cancelled" and order.status != "refunded" %}
+  <div class="timeline d-flex flex-wrap gap-3 small mb-3">
+    <span class="step done"><i class="bi bi-check-circle"></i> Passée</span>
+    <span class="step {% if order.status in 'confirmed preparing shipped delivered' %}done{% endif %}"><i class="bi bi-check-circle"></i> Confirmée</span>
+    <span class="step {% if order.status in 'preparing shipped delivered' %}done{% endif %}"><i class="bi bi-box-seam"></i> En préparation</span>
+    <span class="step {% if order.status in 'shipped delivered' %}done{% endif %}"><i class="bi bi-truck"></i> Expédiée</span>
+    <span class="step {% if order.status == 'delivered' %}done{% endif %}"><i class="bi bi-house-check"></i> Livrée</span>
+  </div>
+  {% endif %}
+  <div class="row g-3">
+    <div class="col-md-7">
+      <div class="card mb-3"><ul class="list-group list-group-flush">
+        {% for it in order.items.all %}
+        <li class="list-group-item d-flex justify-content-between gap-2">
+          <span>{% if it.listing %}<a href="{{ it.listing.get_absolute_url }}">{{ it.title }}</a>{% else %}{{ it.title }}{% endif %}<br><small class="text-muted">{{ it.quantity }} × {{ it.unit_price|xof }}</small></span>
+          <span class="fw-semibold">{{ it.subtotal|xof }}</span></li>
+        {% endfor %}
+        <li class="list-group-item d-flex justify-content-between"><span>Livraison ({{ order.delivery_mode_label }})</span><span>{{ order.delivery_fee|xof }}</span></li>
+        <li class="list-group-item d-flex justify-content-between fw-bold"><span>Total</span><span>{{ order.total_amount|xof }}</span></li>
+      </ul></div>
+      <div class="card card-body small">
+        <h2 class="h6 fw-bold">Livraison</h2>
+        <div>{{ order.recipient_name }} · {{ order.recipient_phone }}</div>
+        <div>{{ order.delivery_address }}{% if order.commune %}, {{ order.commune }}{% endif %}, {{ order.city }}</div>
+        {% if order.tracking_note %}<div class="mt-2"><strong>Suivi :</strong> {{ order.tracking_note }}</div>{% endif %}
+        {% if order.buyer_note %}<div class="mt-2"><strong>Message de l'acheteur :</strong> {{ order.buyer_note }}</div>{% endif %}
+        <div class="mt-2"><strong>Paiement :</strong> {% if order.payment_method == "cod" %}à la livraison{% else %}{{ order.payment_method }}{% endif %} — {{ order.get_payment_status_display }}</div>
+      </div>
+    </div>
+    <div class="col-md-5">
+      <div class="card card-body mb-3 small">
+        <div>Passée le {{ order.created_at|date:"d/m/Y à H:i" }}</div>
+        <div>Acheteur : <a href="{% url 'accounts:profile' order.buyer.username %}">{{ order.buyer.username }}</a></div>
+        <div>Vendeur : <a href="{% url 'accounts:profile' order.seller.username %}">{{ order.seller.username }}</a></div>
+      </div>
+      {% if is_seller and status_form.fields.status.choices %}
+      <form method="post" action="{% url 'orders:seller_update' order.order_number %}" class="card card-body mb-3">{% csrf_token %}
+        <h2 class="h6 fw-bold">Mettre à jour la commande</h2>
+        {% include "partials/form_fields.html" with form=status_form %}
+        <button class="btn btn-brand">Enregistrer</button>
+      </form>
+      {% endif %}
+      {% if is_buyer %}
+        {% if order.status == "pending" %}<form method="post" action="{% url 'orders:buyer_action' order.order_number 'annuler' %}" onsubmit="return confirm('Annuler cette commande ?')">{% csrf_token %}<button class="btn btn-outline-danger w-100 mb-2">Annuler la commande</button></form>{% endif %}
+        {% if order.status == "shipped" %}<form method="post" action="{% url 'orders:buyer_action' order.order_number 'recue' %}">{% csrf_token %}<button class="btn btn-brand w-100 mb-2">J'ai reçu ma commande</button></form>{% endif %}
+        {% if order.is_reviewable %}<a class="btn btn-outline-brand w-100 mb-2" href="{% url 'reviews:create' order.order_number %}"><i class="bi bi-star"></i> Évaluer le vendeur</a>{% endif %}
+        {% if order.review %}<div class="card card-body small"><span class="stars">{{ order.review.rating|stars }}</span>{{ order.review.comment }}</div>{% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

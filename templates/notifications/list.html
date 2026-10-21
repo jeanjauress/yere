@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% load humanize %}
+{% block title %}Notifications — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container mt-3" style="max-width: 800px">
+  <div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h4 fw-bold mb-0">Notifications</h1>
+    <form method="post" action="{% url 'notifications:mark_all_read' %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary">Tout marquer comme lu</button></form></div>
+  <div class="list-group">
+    {% for n in page %}
+    <a href="{% url 'notifications:open' n.pk %}" class="list-group-item list-group-item-action {% if not n.is_read %}fw-semibold{% endif %}">
+      <i class="bi {% if n.kind == 'message' %}bi-chat-dots{% elif n.kind == 'moderation' %}bi-shield-exclamation{% elif n.kind == 'review' %}bi-star{% else %}bi-bag{% endif %} me-1"></i> {{ n.message }}
+      <div class="small text-muted fw-normal">{{ n.created_at|naturaltime }}</div></a>
+    {% empty %}<div class="list-group-item text-muted">Aucune notification.</div>{% endfor %}
+  </div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

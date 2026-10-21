@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% load market %}
+{% block title %}Conversation avec {{ other.username }} — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container mt-3" style="max-width: 800px">
+  <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+    <a href="{% url 'messaging:inbox' %}" class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i></a>
+    {% include "partials/avatar.html" with u=other size="avatar-sm" %}
+    <a class="fw-bold" href="{% url 'accounts:profile' other.username %}">{{ other.username }}</a>
+    <div class="ms-auto d-flex gap-1">
+      <form method="post" action="{% url 'messaging:toggle_block' other.username %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="btn btn-sm btn-outline-danger">{% if i_blocked %}Débloquer{% else %}Bloquer{% endif %}</button></form>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'moderation:report_user' other.username %}"><i class="bi bi-flag"></i></a>
+    </div>
+  </div>
+  {% if conv.listing %}
+  <a href="{{ conv.listing.get_absolute_url }}" class="card card-body py-2 mb-2 d-flex flex-row gap-2 align-items-center text-decoration-none">
+    {% with c=conv.listing.cover %}{% if c %}<img src="{{ c.image.url }}" class="avatar" style="border-radius:.4rem" alt="">{% endif %}{% endwith %}
+    <span class="small">{{ conv.listing.title }}<br><strong>{{ conv.listing.price|xof }}</strong></span></a>
+  {% endif %}
+  <div class="card card-body chat-box bg-light d-flex flex-column gap-2">
+    {% for m in msgs %}
+    <div class="bubble {% if m.sender == user %}me{% else %}them{% endif %}">{{ m.body }}<div class="small opacity-75 text-end">{{ m.created_at|date:"d/m H:i" }}{% if m.sender == user %} {% if m.read_at %}<i class="bi bi-check2-all" title="Lu"></i>{% else %}<i class="bi bi-check2" title="Envoyé"></i>{% endif %}{% endif %}</div></div>
+    {% empty %}<p class="text-muted text-center small my-3">Écrivez votre premier message.</p>{% endfor %}
+  </div>
+  {% if blocked %}<div class="alert alert-secondary mt-2 small">Les échanges sont bloqués entre vous et cet utilisateur.</div>
+  {% else %}
+  <form method="post" class="mt-2 d-flex gap-2">{% csrf_token %}{{ form.body.errors }}
+    <textarea name="body" class="form-control" rows="2" maxlength="2000" placeholder="Votre message…" required></textarea>
+    <button class="btn btn-brand"><i class="bi bi-send"></i></button></form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Paramètres — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container mt-3" style="max-width: 720px">
+  <h1 class="h4 fw-bold mb-3">Paramètres du compte</h1>
+  <form method="post" enctype="multipart/form-data" class="card card-body mb-3" novalidate>{% csrf_token %}
+    <h2 class="h6 fw-bold">Profil</h2>
+    {% include "partials/form_fields.html" %}
+    <button class="btn btn-brand">Enregistrer</button>
+  </form>
+  <div class="card card-body mb-3">
+    <h2 class="h6 fw-bold">Sécurité</h2>
+    <p class="small mb-2">E-mail : {{ user.email }} {% if user.email_verified %}<span class="badge text-bg-success">vérifié</span>{% else %}<span class="badge text-bg-warning">non vérifié</span>{% endif %}</p>
+    {% if not user.email_verified %}<form method="post" action="{% url 'accounts:resend_verification' %}" class="mb-2">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary">Renvoyer l'e-mail de confirmation</button></form>{% endif %}
+    <a class="btn btn-sm btn-outline-secondary align-self-start" href="{% url 'accounts:password_change' %}">Changer le mot de passe</a>
+  </div>
+  <div class="card card-body border-danger">
+    <h2 class="h6 fw-bold text-danger">Désactiver le compte</h2>
+    <p class="small">Vos annonces seront retirées du catalogue. L'historique des commandes est conservé.</p>
+    <a class="btn btn-sm btn-outline-danger align-self-start" href="{% url 'accounts:deactivate' %}">Désactiver mon compte</a>
+  </div>
+</div>
+{% endblock %}

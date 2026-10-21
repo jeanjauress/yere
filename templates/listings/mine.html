@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% load market %}
+{% block title %}Mes annonces — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container mt-3">
+  <div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h4 fw-bold mb-0">Mes annonces</h1><a class="btn btn-brand" href="{% url 'listings:create' %}"><i class="bi bi-plus-lg"></i> Nouvelle annonce</a></div>
+  <div class="scroll-x d-flex gap-2 mb-3"><a class="cat-pill {% if not status %}active{% endif %}" href="?">Toutes</a>{% for v, l in statuses %}<a class="cat-pill {% if status == v %}active{% endif %}" href="?statut={{ v }}">{{ l }}</a>{% endfor %}</div>
+  <div class="list-group">
+    {% for l in page %}
+    <div class="list-group-item d-flex gap-3 align-items-center flex-wrap">
+      {% with c=l.cover %}{% if c %}<img src="{{ c.image.url }}" class="gallery-thumb" style="opacity:1" alt="">{% else %}<div class="gallery-thumb bg-light"></div>{% endif %}{% endwith %}
+      <div class="flex-grow-1"><a href="{{ l.get_absolute_url }}" class="fw-semibold">{{ l.title }}</a>
+        <div class="small text-muted">{{ l.price|xof }} · stock {{ l.quantity }} · {{ l.views_count }} vues · <span class="badge text-bg-light">{{ l.get_status_display }}</span></div></div>
+      <div class="d-flex gap-1 flex-wrap">
+        {% if l.status != "suspended" %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'listings:edit' l.pk %}">Modifier</a>{% endif %}
+        {% if l.status == "published" %}
+          <form method="post" action="{% url 'listings:change_status' l.pk 'deactivate' %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary">Désactiver</button></form>
+        {% elif l.status == "inactive" or l.status == "draft" %}
+          <form method="post" action="{% url 'listings:change_status' l.pk 'activate' %}">{% csrf_token %}<button class="btn btn-sm btn-outline-success">Publier</button></form>
+        {% endif %}
+        {% if l.status == "published" or l.status == "inactive" %}<form method="post" action="{% url 'listings:change_status' l.pk 'sold' %}">{% csrf_token %}<button class="btn btn-sm btn-outline-primary">Vendue</button></form>{% endif %}
+        {% if l.status != "suspended" %}<form method="post" action="{% url 'listings:change_status' l.pk 'delete' %}" onsubmit="return confirm('Supprimer cette annonce ?')">{% csrf_token %}<button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button></form>{% endif %}
+      </div>
+    </div>
+    {% empty %}<div class="list-group-item text-muted">Aucune annonce.</div>{% endfor %}
+  </div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

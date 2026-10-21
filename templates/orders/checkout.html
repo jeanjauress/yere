@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% load market %}
+{% block title %}Validation de la commande — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container mt-3">
+  <h1 class="h4 fw-bold mb-3">Validation de la commande</h1>
+  <form method="post" novalidate><div class="row g-4">{% csrf_token %}
+    <div class="col-lg-7"><div class="card card-body">
+      <h2 class="h6 fw-bold">Livraison et paiement</h2>
+      {% include "partials/form_fields.html" %}
+      <p class="small text-muted mb-0"><i class="bi bi-shield-lock"></i> Aucune donnée bancaire ni code Mobile Money n'est demandé ou conservé.</p>
+    </div></div>
+    <div class="col-lg-5"><div class="card card-body">
+      <h2 class="h6 fw-bold">Récapitulatif</h2>
+      <ul class="list-unstyled small">{% for it in items %}<li class="d-flex justify-content-between"><span>{{ it.quantity }} × {{ it.listing.title|truncatechars:40 }}</span><span>{{ it.subtotal|xof }}</span></li>{% endfor %}</ul>
+      <hr>
+      <div class="d-flex justify-content-between"><span>Articles</span><span>{{ items_total|xof }}</span></div>
+      <div class="small text-muted">Livraison : {% for k, fee in fees.items %}{{ fee|xof }}{% if not forloop.last %} / {% endif %}{% endfor %} selon le mode choisi{% if n_sellers > 1 %} ({{ n_sellers }} vendeurs, une commande et une livraison par vendeur){% endif %}.</div>
+      <p class="small text-muted mt-2">Le montant final est calculé par le serveur au moment de la validation et le stock est vérifié.</p>
+      <button class="btn btn-brand btn-lg w-100">Confirmer la commande</button>
+    </div></div>
+  </div></form>
+</div>
+{% endblock %}

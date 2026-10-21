@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /compte/
+Disallow: /moderation/
+Disallow: /messages/
+Disallow: /panier/
+Disallow: /commande
+Sitemap: {{ request.scheme }}://{{ request.get_host }}/sitemap.xml

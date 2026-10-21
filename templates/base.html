@@ -1,0 +1,92 @@
+{% load static market %}<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ SITE_NAME }} — Achetez et vendez d'occasion en Côte d'Ivoire{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Vendez ce que vous n'utilisez plus, trouvez des articles à petit prix près de chez vous. Mode, électronique, maison.{% endblock %}">
+  <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/app.css' %}" rel="stylesheet">
+  <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+  {% block head %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100">
+<nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top">
+  <div class="container">
+    <a class="navbar-brand fw-bold text-brand" href="{% url 'listings:home' %}"><i class="bi bi-bag-heart-fill"></i> {{ SITE_NAME }}</a>
+    <form class="d-none d-md-flex flex-grow-1 mx-3" action="{% url 'listings:search' %}" role="search">
+      <div class="input-group">
+        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+        <input class="form-control bg-light border-start-0" type="search" name="q" value="{{ request.GET.q }}" placeholder="Rechercher un article, une marque…" aria-label="Rechercher">
+      </div>
+    </form>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-label="Menu"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse flex-grow-0" id="nav">
+      <ul class="navbar-nav align-items-lg-center gap-lg-1">
+        {% if user.is_authenticated %}
+          <li class="nav-item"><a class="nav-link position-relative" href="{% url 'messaging:inbox' %}" title="Messages"><i class="bi bi-chat-dots"></i><span class="d-lg-none"> Messages</span>{% if unread_messages %}<span class="badge rounded-pill bg-danger badge-dot">{{ unread_messages }}</span>{% endif %}</a></li>
+          <li class="nav-item"><a class="nav-link position-relative" href="{% url 'notifications:list' %}" title="Notifications"><i class="bi bi-bell"></i><span class="d-lg-none"> Notifications</span>{% if unread_notifications %}<span class="badge rounded-pill bg-danger badge-dot">{{ unread_notifications }}</span>{% endif %}</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'favorites:list' %}" title="Favoris"><i class="bi bi-heart"></i><span class="d-lg-none"> Favoris</span></a></li>
+          <li class="nav-item"><a class="nav-link position-relative" href="{% url 'orders:cart' %}" title="Panier"><i class="bi bi-cart3"></i><span class="d-lg-none"> Panier</span>{% if cart_count %}<span class="badge rounded-pill bg-brand badge-dot">{{ cart_count }}</span>{% endif %}</a></li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+              {% if user.profile_image %}<img src="{{ user.profile_image.url }}" class="avatar avatar-sm" alt="">{% else %}<i class="bi bi-person-circle"></i>{% endif %}
+              <span class="d-lg-none">{{ user.username }}</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="{% url 'accounts:dashboard' %}"><i class="bi bi-speedometer2"></i> Tableau de bord</a></li>
+              <li><a class="dropdown-item" href="{% url 'listings:mine' %}"><i class="bi bi-grid"></i> Mes annonces</a></li>
+              <li><a class="dropdown-item" href="{% url 'orders:purchases' %}"><i class="bi bi-bag"></i> Mes achats</a></li>
+              <li><a class="dropdown-item" href="{% url 'orders:sales' %}"><i class="bi bi-cash-coin"></i> Mes ventes</a></li>
+              <li><a class="dropdown-item" href="{% url 'reviews:mine' %}"><i class="bi bi-star"></i> Mes avis</a></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:profile' user.username %}"><i class="bi bi-person"></i> Mon profil public</a></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:settings' %}"><i class="bi bi-gear"></i> Paramètres</a></li>
+              {% if user.is_staff %}<li><hr class="dropdown-divider"></li><li><a class="dropdown-item" href="{% url 'moderation:dashboard' %}"><i class="bi bi-shield-check"></i> Administration</a></li>{% endif %}
+              <li><hr class="dropdown-divider"></li>
+              <li><form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="dropdown-item"><i class="bi bi-box-arrow-right"></i> Déconnexion</button></form></li>
+            </ul>
+          </li>
+        {% else %}
+          <li class="nav-item"><a class="nav-link" href="{% url 'accounts:login' %}">Connexion</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'accounts:signup' %}">Inscription</a></li>
+        {% endif %}
+        <li class="nav-item ms-lg-2"><a class="btn btn-brand" href="{% url 'listings:create' %}"><i class="bi bi-plus-lg"></i> Vendre</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div class="container d-md-none py-2">
+  <form action="{% url 'listings:search' %}" role="search"><input class="form-control" type="search" name="q" value="{{ request.GET.q }}" placeholder="Rechercher…" aria-label="Rechercher"></form>
+</div>
+
+<main class="flex-grow-1">
+  {% if messages %}
+  <div class="container mt-3">
+    {% for m in messages %}
+    <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} alert-dismissible fade show" role="alert">{{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button></div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if user.is_authenticated and not user.email_verified %}
+  <div class="container mt-2"><div class="alert alert-warning py-2 small mb-0"><i class="bi bi-envelope-exclamation"></i> Pensez à confirmer votre adresse e-mail. <a href="{% url 'accounts:settings' %}">Renvoyer le lien</a></div></div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="bg-light border-top mt-5 py-4 small">
+  <div class="container d-flex flex-column flex-md-row justify-content-between gap-2">
+    <div>© {% now "Y" %} {{ SITE_NAME }} — Côte d'Ivoire. Prix en francs CFA (XOF).</div>
+    <div class="d-flex flex-wrap gap-3">
+      <a href="{% url 'legal' %}">Mentions légales</a>
+      <a href="{% url 'terms' %}">Conditions d'utilisation</a>
+      <a href="{% url 'privacy' %}">Confidentialité</a>
+      <a href="{% url 'contact' %}">Contact</a>
+    </div>
+  </div>
+</footer>
+<script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

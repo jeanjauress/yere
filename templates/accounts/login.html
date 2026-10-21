@@ -1,0 +1,9 @@
+{% extends "accounts/auth_base.html" %}
+{% block title %}Connexion — {{ SITE_NAME }}{% endblock %}
+{% block card %}
+<h1 class="h4 fw-bold mb-3">Connexion</h1>
+<form method="post" novalidate>{% csrf_token %}{% include "partials/form_fields.html" %}
+<input type="hidden" name="next" value="{{ next }}">
+<button class="btn btn-brand w-100">Se connecter</button></form>
+<p class="small mt-3 mb-0"><a href="{% url 'accounts:password_reset' %}">Mot de passe oublié ?</a> · Pas de compte ? <a href="{% url 'accounts:signup' %}">S'inscrire</a></p>
+{% endblock %}

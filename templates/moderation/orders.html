@@ -1,0 +1,11 @@
+{% extends "moderation/base.html" %}{% load market %}
+{% block admin %}
+<form class="d-flex gap-2 mb-3 flex-wrap"><input class="form-control" style="max-width:280px" name="q" value="{{ q }}" placeholder="N° commande, acheteur, vendeur">
+  <select class="form-select" style="max-width:240px" name="statut"><option value="">Tous statuts</option>{% for v, l in statuses %}<option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <button class="btn btn-outline-secondary">Filtrer</button></form>
+<div class="table-responsive"><table class="table table-sm align-middle bg-white">
+  <thead><tr><th>N°</th><th>Date</th><th>Acheteur</th><th>Vendeur</th><th>Total</th><th>Statut</th><th>Paiement</th></tr></thead>
+  <tbody>{% for o in page %}<tr><td><a href="{{ o.get_absolute_url }}">{{ o.order_number }}</a></td><td class="small">{{ o.created_at|date:"d/m/Y H:i" }}</td><td>@{{ o.buyer.username }}</td><td>@{{ o.seller.username }}</td><td>{{ o.total_amount|xof }}</td><td>{{ o.get_status_display }}</td><td>{{ o.get_payment_status_display }}</td></tr>{% empty %}<tr><td colspan="7" class="text-muted">Aucune commande.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% include "partials/pagination.html" %}
+{% endblock %}

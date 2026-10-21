@@ -1,0 +1,7 @@
+{% extends "accounts/auth_base.html" %}
+{% block title %}Évaluer {{ order.seller.username }} — {{ SITE_NAME }}{% endblock %}
+{% block card %}
+<h1 class="h5 fw-bold">Évaluer {{ order.seller.username }}</h1>
+<p class="small text-muted">Commande {{ order.order_number }}</p>
+<form method="post" novalidate>{% csrf_token %}{% include "partials/form_fields.html" %}<button class="btn btn-brand w-100">Publier l'avis</button></form>
+{% endblock %}

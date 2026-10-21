@@ -1,0 +1,8 @@
+{% extends "accounts/auth_base.html" %}
+{% block title %}Inscription — {{ SITE_NAME }}{% endblock %}
+{% block card %}
+<h1 class="h4 fw-bold mb-3">Créer un compte</h1>
+<form method="post" novalidate>{% csrf_token %}{% include "partials/form_fields.html" %}
+<button class="btn btn-brand w-100">S'inscrire</button></form>
+<p class="small text-muted mt-3 mb-0">Déjà inscrit ? <a href="{% url 'accounts:login' %}">Se connecter</a> · <a href="{% url 'terms' %}" target="_blank">Conditions</a></p>
+{% endblock %}

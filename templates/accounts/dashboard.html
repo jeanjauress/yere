@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% load market %}
+{% block title %}Tableau de bord — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container mt-3">
+  <div class="d-flex align-items-center gap-3 mb-4">
+    {% include "partials/avatar.html" with u=user size="avatar-lg" %}
+    <div><h1 class="h4 fw-bold mb-0">Bonjour {{ user.first_name|default:user.username }}</h1>
+      <div class="small">{% if rating.count %}<span class="stars">{{ rating.avg|stars }}</span> {{ rating.avg|floatformat:1 }}/5 ({{ rating.count }} avis){% else %}<span class="text-muted">Pas encore d'avis</span>{% endif %}</div></div>
+  </div>
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><a href="{% url 'listings:mine' %}" class="card stat-card card-body text-decoration-none"><div class="text-muted small">Annonces en ligne</div><div class="fs-3 fw-bold">{{ active_count }}<span class="fs-6 text-muted"> / {{ listings_count }}</span></div></a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'orders:sales' %}?statut=pending" class="card stat-card card-body text-decoration-none"><div class="text-muted small">Ventes à confirmer</div><div class="fs-3 fw-bold {% if pending_sales %}text-danger{% endif %}">{{ pending_sales }}</div></a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'favorites:list' %}" class="card stat-card card-body text-decoration-none"><div class="text-muted small">Favoris</div><div class="fs-3 fw-bold">{{ favorites_count }}</div></a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'messaging:inbox' %}" class="card stat-card card-body text-decoration-none"><div class="text-muted small">Messages non lus</div><div class="fs-3 fw-bold">{{ unread_messages }}</div></a></div>
+  </div>
+  <div class="row g-4">
+    <div class="col-md-6"><div class="d-flex justify-content-between"><h2 class="h6 fw-bold">Derniers achats</h2><a class="small" href="{% url 'orders:purchases' %}">Tout voir</a></div>
+      <div class="list-group">{% for o in purchases %}<a class="list-group-item list-group-item-action d-flex justify-content-between" href="{{ o.get_absolute_url }}"><span>{{ o.order_number }}<br><small class="text-muted">{{ o.get_status_display }}</small></span><span class="fw-semibold">{{ o.total_amount|xof }}</span></a>{% empty %}<div class="list-group-item text-muted small">Aucun achat.</div>{% endfor %}</div></div>
+    <div class="col-md-6"><div class="d-flex justify-content-between"><h2 class="h6 fw-bold">Dernières ventes</h2><a class="small" href="{% url 'orders:sales' %}">Tout voir</a></div>
+      <div class="list-group">{% for o in sales %}<a class="list-group-item list-group-item-action d-flex justify-content-between" href="{{ o.get_absolute_url }}"><span>{{ o.order_number }}<br><small class="text-muted">{{ o.get_status_display }}</small></span><span class="fw-semibold">{{ o.total_amount|xof }}</span></a>{% empty %}<div class="list-group-item text-muted small">Aucune vente.</div>{% endfor %}</div></div>
+  </div>
+</div>
+{% endblock %}

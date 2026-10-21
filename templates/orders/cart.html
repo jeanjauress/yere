@@ -1,0 +1,34 @@
+{% extends "base.html" %}{% load market %}
+{% block title %}Panier — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container mt-3" style="max-width: 900px">
+  <h1 class="h4 fw-bold mb-3">Mon panier</h1>
+  {% for p in problems %}<div class="alert alert-warning py-2">{{ p }}</div>{% endfor %}
+  {% if items %}
+  {% for seller, sitems in groups.items %}
+  <div class="card mb-3">
+    <div class="card-header small">Vendu par <a href="{% url 'accounts:profile' seller.username %}">{{ seller.username }}</a></div>
+    <ul class="list-group list-group-flush">
+      {% for it in sitems %}
+      <li class="list-group-item d-flex gap-3 align-items-center flex-wrap">
+        {% with c=it.listing.cover %}{% if c %}<img src="{{ c.image.url }}" class="gallery-thumb" style="opacity:1" alt="">{% endif %}{% endwith %}
+        <div class="flex-grow-1"><a href="{{ it.listing.get_absolute_url }}">{{ it.listing.title }}</a><div class="small text-muted">{{ it.listing.price|xof }} · stock {{ it.listing.quantity }}</div></div>
+        <form method="post" action="{% url 'orders:cart_update' it.pk %}" class="d-flex gap-1">{% csrf_token %}
+          <input type="number" class="form-control form-control-sm" style="width:70px" name="quantity" min="1" max="{{ it.listing.quantity }}" value="{{ it.quantity }}">
+          <button class="btn btn-sm btn-outline-secondary" title="Mettre à jour"><i class="bi bi-arrow-repeat"></i></button></form>
+        <div class="fw-semibold" style="min-width:110px; text-align:right">{{ it.subtotal|xof }}</div>
+        <form method="post" action="{% url 'orders:cart_remove' it.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" title="Retirer"><i class="bi bi-x-lg"></i></button></form>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+  <div class="card card-body d-flex flex-row justify-content-between align-items-center flex-wrap gap-2">
+    <div>Sous-total : <span class="fs-5 fw-bold">{{ items_total|xof }}</span><div class="small text-muted">Frais de livraison calculés à l'étape suivante.</div></div>
+    <a class="btn btn-brand btn-lg {% if problems %}disabled{% endif %}" href="{% url 'orders:checkout' %}">Passer la commande</a>
+  </div>
+  {% else %}
+  <div class="text-center text-muted py-5"><i class="bi bi-cart fs-1"></i><p>Votre panier est vide.</p><a class="btn btn-brand" href="{% url 'listings:search' %}">Parcourir le catalogue</a></div>
+  {% endif %}
+</div>
+{% endblock %}

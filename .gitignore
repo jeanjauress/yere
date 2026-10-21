@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+var/*
+!var/.gitkeep
+media/*
+!media/.gitkeep
+staticfiles/

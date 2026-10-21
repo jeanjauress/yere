@@ -1,0 +1,2 @@
+{% extends "base.html" %}{% block title %}Page introuvable — {{ SITE_NAME }}{% endblock %}
+{% block content %}<div class="container text-center py-5"><div class="display-4 fw-bold text-brand">404</div><p class="lead">Cette page n'existe pas ou l'article n'est plus disponible.</p><a class="btn btn-brand" href="{% url 'listings:home' %}">Retour à l'accueil</a></div>{% endblock %}

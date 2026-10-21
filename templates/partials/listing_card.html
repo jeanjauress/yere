@@ -1,0 +1,18 @@
+{% load market %}<div class="card item-card h-100">
+  <div class="thumb-wrap">
+    <a href="{{ l.get_absolute_url }}">
+      {% with c=l.cover %}{% if c %}<img src="{{ c.image.url }}" class="thumb" alt="{{ l.title }}" loading="lazy">{% else %}<div class="thumb d-flex align-items-center justify-content-center text-muted"><i class="bi bi-image fs-1"></i></div>{% endif %}{% endwith %}
+    </a>
+    {% if l.status != "published" %}<span class="badge bg-dark status-badge">{{ l.get_status_display }}</span>{% endif %}
+    {% if user.is_authenticated and user != l.seller and l.status == "published" %}
+    <form method="post" action="{% url 'favorites:toggle' l.pk %}" class="js-fav">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button class="fav-btn" aria-label="Favori"><i class="bi bi-heart{% if l.pk in fav_ids or show_fav_filled %}-fill text-danger{% endif %}"></i></button></form>
+    {% endif %}
+  </div>
+  <a href="{{ l.get_absolute_url }}" class="pt-2 d-block">
+    <div class="price">{{ l.price|xof }}</div>
+    <div class="small text-truncate">{{ l.title }}</div>
+    <div class="small text-muted text-truncate">{% if l.brand %}{{ l.brand }} · {% endif %}{{ l.get_condition_display }}</div>
+    <div class="small text-muted text-truncate"><i class="bi bi-geo-alt"></i> {{ l.city }}</div>
+  </a>
+</div>
