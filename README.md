@@ -109,6 +109,9 @@ Le fichier `render.yaml` décrit le service : Dashboard Render → **New → Blu
   Le nom d'hôte `*.onrender.com` est ajouté automatiquement à `ALLOWED_HOSTS` et `CSRF_TRUSTED_ORIGINS`.
 - Créer le premier compte administrateur depuis l'onglet **Shell** du service :
   `python manage.py createsuperuser`.
+- Offre gratuite (démo, sans disque) : retirer `disk` et les chemins `/var/data` ; `SEED_DEMO=true` remplit la
+  base d'exemples à chaque démarrage et `DJANGO_SUPERUSER_PASSWORD` (avec `DJANGO_SUPERUSER_USERNAME`, défaut
+  `admin`) recrée le compte administrateur, puisque l'offre gratuite n'a pas d'onglet Shell.
 - Pour un nom de domaine personnalisé, l'ajouter dans Render puis dans `DJANGO_ALLOWED_HOSTS`,
   `DJANGO_CSRF_TRUSTED_ORIGINS` et `SITE_URL`.
 
