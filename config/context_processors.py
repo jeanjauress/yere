@@ -15,4 +15,8 @@ def site(request):
 
         data["fav_ids"] = set(Favorite.objects.filter(user=user).values_list("listing_id", flat=True))
         data["cart_count"] = CartItem.objects.filter(user=user).count()
+        if user.is_staff and request.path.startswith("/moderation/"):
+            from moderation.models import Report
+
+            data["open_reports_count"] = Report.objects.filter(status=Report.Status.OPEN).count()
     return data

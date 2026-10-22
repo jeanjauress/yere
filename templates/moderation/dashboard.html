@@ -1,14 +1,69 @@
-{% extends "moderation/base.html" %}{% load market %}
+{% extends "moderation/base.html" %}{% load l10n market %}
+{% block title %}Tableau de bord{% endblock %}
 {% block admin %}
-<div class="row g-3 mb-4">
-  <div class="col-6 col-lg-3"><div class="card stat-card card-body"><div class="small text-muted">Utilisateurs</div><div class="fs-3 fw-bold">{{ stats.users }}</div><div class="small text-muted">+{{ stats.new_users }} sur 30 j</div></div></div>
-  <div class="col-6 col-lg-3"><div class="card stat-card card-body"><div class="small text-muted">Annonces en ligne</div><div class="fs-3 fw-bold">{{ stats.listings }}</div><div class="small text-muted">+{{ stats.new_listings }} sur 30 j</div></div></div>
-  <div class="col-6 col-lg-3"><div class="card stat-card card-body"><div class="small text-muted">Commandes (hors annulées)</div><div class="fs-3 fw-bold">{{ stats.orders }}</div><div class="small text-muted">{{ stats.orders_30 }} sur 30 j · {{ stats.gmv_30|xof }}</div></div></div>
-  <div class="col-6 col-lg-3"><a href="{% url 'moderation:reports' %}" class="card stat-card card-body text-decoration-none"><div class="small text-muted">Signalements à traiter</div><div class="fs-3 fw-bold {% if stats.open_reports %}text-danger{% endif %}">{{ stats.open_reports }}</div><div class="small text-muted">{{ stats.suspended_users }} comptes / {{ stats.suspended_listings }} annonces suspendus</div></a></div>
+<div class="adm-head">
+  <div>
+    <h1>Bonjour {{ user.first_name|default:user.username }},<br>voici l'activité de {{ SITE_NAME }}</h1>
+    <p>{% now "l j F Y" %} · {% if stats.open_reports %}{{ stats.open_reports }} signalement{{ stats.open_reports|pluralize }} attend{{ stats.open_reports|pluralize:"ent" }} une décision{% else %}aucun signalement en attente{% endif %}</p>
+  </div>
 </div>
-<div class="row g-4">
-  <div class="col-lg-4"><h2 class="h6 fw-bold">Commandes par statut</h2><ul class="list-group">{% for label, n in by_status %}<li class="list-group-item d-flex justify-content-between"><span>{{ label }}</span><strong>{{ n }}</strong></li>{% empty %}<li class="list-group-item text-muted small">Aucune commande.</li>{% endfor %}</ul></div>
-  <div class="col-lg-4"><h2 class="h6 fw-bold">Derniers signalements</h2><div class="list-group">{% for r in reports %}<a class="list-group-item list-group-item-action small" href="{% url 'moderation:report_detail' r.pk %}"><strong>{{ r.get_reason_display }}</strong> — {% if r.listing %}{{ r.listing.title }}{% else %}@{{ r.reported_user.username }}{% endif %}<br><span class="text-muted">{{ r.created_at|date:"d/m H:i" }}</span></a>{% empty %}<div class="list-group-item text-muted small">Rien à traiter.</div>{% endfor %}</div></div>
-  <div class="col-lg-4"><h2 class="h6 fw-bold">Journal récent</h2><ul class="list-group">{% for l in logs %}<li class="list-group-item small"><code>{{ l.action }}</code> {{ l.target_repr }}<br><span class="text-muted">{{ l.actor.username|default:"système" }} · {{ l.created_at|date:"d/m H:i" }}</span></li>{% empty %}<li class="list-group-item text-muted small">Vide.</li>{% endfor %}</ul></div>
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-xl-3"><div class="adm-card adm-kpi">
+    <div class="d-flex justify-content-between"><span class="lbl">Membres</span><span class="ico"><i class="bi bi-people"></i></span></div>
+    <div class="val">{{ stats.users }}</div><span class="adm-tag ok">+{{ stats.new_users }}</span><span class="sub">sur 30 jours</span>
+  </div></div>
+  <div class="col-6 col-xl-3"><div class="adm-card adm-kpi">
+    <div class="d-flex justify-content-between"><span class="lbl">Annonces en ligne</span><span class="ico"><i class="bi bi-bag"></i></span></div>
+    <div class="val">{{ stats.listings }}</div><span class="adm-tag ok">+{{ stats.new_listings }}</span><span class="sub">sur 30 jours</span>
+  </div></div>
+  <div class="col-12 col-sm-6 col-xl-3"><div class="adm-card adm-kpi">
+    <div class="d-flex justify-content-between"><span class="lbl">Volume vendu (30 j)</span><span class="ico"><i class="bi bi-cash-coin"></i></span></div>
+    <div class="val">{{ stats.gmv_30|xof }}</div><span class="adm-tag ok">{{ stats.orders_30 }} commande{{ stats.orders_30|pluralize }}</span><span class="sub">{{ stats.orders }} au total</span>
+  </div></div>
+  <div class="col-12 col-sm-6 col-xl-3"><a class="adm-card adm-kpi" href="{% url 'moderation:reports' %}">
+    <div class="d-flex justify-content-between"><span class="lbl">Signalements ouverts</span><span class="ico"><i class="bi bi-flag"></i></span></div>
+    <div class="val">{{ stats.open_reports }}</div><span class="adm-tag {% if stats.suspended_users or stats.suspended_listings %}bad{% endif %}">{{ stats.suspended_listings }} annonce{{ stats.suspended_listings|pluralize }} · {{ stats.suspended_users }} compte{{ stats.suspended_users|pluralize }}</span><span class="sub">suspendus</span>
+  </a></div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-xl-8"><div class="adm-card h-100">
+    <div class="adm-card-head"><h2>Commandes &amp; volume · 14 jours</h2>
+      <div class="adm-legend"><span><i style="background:var(--adm-accent)"></i>Commandes / jour</span><span><i style="background:var(--adm-gold)"></i>Volume (FCFA)</span></div></div>
+    {% if chart.total %}
+    {% localize off %}<svg class="adm-chart" viewBox="0 0 {{ chart.width }} {{ chart.height }}" width="100%" role="img" aria-label="{{ chart.total }} commandes pour {{ chart.gmv|xof }} sur 14 jours">
+      {% for b in chart.bars %}<rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" rx="5" fill="var(--adm-accent)" opacity="{% if b.last %}1{% else %}.35{% endif %}"><title>{{ b.day|date:"d/m" }} : {{ b.n }} commande{{ b.n|pluralize }} · {{ b.gmv|xof }}</title></rect>
+      {% if b.label %}<text x="{{ b.cx }}" y="{{ chart.height|add:-6 }}" text-anchor="middle">{{ b.day|date:"d/m" }}</text>{% endif %}{% endfor %}
+      <polyline points="{{ chart.line }}" fill="none" stroke="var(--adm-gold)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>{% endlocalize %}
+    <div class="d-flex gap-4 mt-2 small text-secondary"><span><b class="text-body">{{ chart.total }}</b> commande{{ chart.total|pluralize }}</span><span><b class="text-body">{{ chart.gmv|xof }}</b> de volume</span></div>
+    {% else %}<div class="adm-empty"><i class="bi bi-bar-chart fs-3 d-block mb-2"></i>Aucune commande sur les 14 derniers jours.</div>{% endif %}
+  </div></div>
+  <div class="col-xl-4"><div class="adm-card h-100">
+    <div class="adm-card-head"><h2>Commandes par statut</h2><a href="{% url 'moderation:orders' %}">Tout voir</a></div>
+    {% if by_status %}
+    <div class="adm-bars">{% for s in by_status %}<div><div class="l"><span>{{ s.label }}</span><b>{{ s.n }}</b></div><div class="adm-bar"><span style="width:{{ s.pct }}%;background:{{ s.color }}"></span></div></div>{% endfor %}</div>
+    <div class="d-flex justify-content-between mt-4 pt-3 border-top"><span class="text-secondary">Taux de livraison</span><b>{{ delivery_rate }} %</b></div>
+    {% else %}<div class="adm-empty">Aucune commande pour l'instant.</div>{% endif %}
+  </div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-6"><div class="adm-card h-100">
+    <div class="adm-card-head"><h2>Signalements à traiter</h2><a href="{% url 'moderation:reports' %}">Ouvrir la file →</a></div>
+    {% for r in reports %}
+    <a class="adm-row" href="{% url 'moderation:report_detail' r.pk %}">
+      {% if r.listing and r.listing.cover %}<img class="adm-thumb" src="{{ r.listing.cover.image.url }}" alt="">{% else %}<span class="adm-thumb"><i class="bi bi-{% if r.listing %}bag{% else %}person{% endif %}"></i></span>{% endif %}
+      <span class="t"><b>{{ r.get_reason_display }}</b><small>{% if r.listing %}{{ r.listing.title|truncatechars:40 }} — {% endif %}@{{ r.reported_user.username|default:"?" }} · {{ r.created_at|timesince }}</small></span>
+      <span class="adm-tag {{ r.severity.0 }}">{{ r.severity.1 }}</span>
+    </a>
+    {% empty %}<div class="adm-empty"><i class="bi bi-check2-circle fs-3 d-block mb-2 text-success"></i>Rien à traiter, tout est en ordre.</div>{% endfor %}
+  </div></div>
+  <div class="col-xl-6"><div class="adm-card h-100">
+    <div class="adm-card-head"><h2>Journal récent</h2><a href="{% url 'moderation:audit' %}">Journal complet →</a></div>
+    <div class="adm-tl">{% for l in logs %}<div class="e"><span class="d"></span><div><code>{{ l.action }}</code> {{ l.target_repr|truncatechars:50 }}<small>{{ l.actor.username|default:"système" }} · {{ l.created_at|date:"d/m H:i" }}</small></div></div>
+    {% empty %}<div class="adm-empty">Aucune action enregistrée.</div>{% endfor %}</div>
+  </div></div>
 </div>
 {% endblock %}

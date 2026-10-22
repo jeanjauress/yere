@@ -9,6 +9,7 @@ from django.urls import reverse
 
 from listings.models import Listing
 from moderation.models import AuditLog, Report
+from orders.models import Order
 
 from .helpers import MediaMixin, make_listing, make_user
 
@@ -32,6 +33,27 @@ class ModerationTests(MediaMixin, TestCase):
     def test_admin_dashboard(self):
         self.client.force_login(self.admin)
         self.assertEqual(self.client.get(reverse("moderation:dashboard")).status_code, 200)
+
+    def test_admin_dashboard_with_activity(self):
+        Order.objects.create(buyer=self.user, seller=self.seller, items_amount=10000, total_amount=12000,
+                             delivery_mode="pickup", recipient_name="A", recipient_phone="0700000000",
+                             delivery_address="Cocody", city="Abidjan")
+        Report.objects.create(reporter=self.user, listing=self.listing, reported_user=self.seller, reason="fraud")
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse("moderation:dashboard"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context["chart"]["total"], 1)
+        self.assertEqual(resp.context["chart"]["gmv"], 12000)
+        self.assertContains(resp, "Urgent")
+        self.assertContains(resp, 'class="adm-count">1<')
+
+    def test_django_admin_uses_theme(self):
+        self.admin.is_superuser = True
+        self.admin.save()
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse("admin:index"))
+        self.assertContains(resp, "css/django-admin.css")
+        self.assertNotContains(resp, "dark_mode.css")
 
     def test_report_then_suspend_listing_is_logged(self):
         self.client.force_login(self.user)

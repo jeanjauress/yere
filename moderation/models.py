@@ -37,6 +37,18 @@ class Report(models.Model):
         ordering = ["-created_at"]
         indexes = [models.Index(fields=["status", "-created_at"])]
 
+    URGENT_REASONS = {Reason.FRAUD, Reason.FORBIDDEN, Reason.COUNTERFEIT}
+    MINOR_REASONS = {Reason.SPAM, Reason.OTHER}
+
+    @property
+    def severity(self):
+        """(classe CSS, libellé) indiquant la priorité de traitement, d'après le motif."""
+        if self.reason in self.URGENT_REASONS:
+            return "bad", "Urgent"
+        if self.reason in self.MINOR_REASONS:
+            return "ok", "Mineur"
+        return "warn", "À voir"
+
 
 class AuditLog(models.Model):
     """Journal des actions sensibles (append-only)."""

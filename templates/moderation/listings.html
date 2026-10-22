@@ -1,17 +1,23 @@
-{% extends "moderation/base.html" %}{% load market %}
+{% extends "moderation/base.html" %}{% load market admin_ui %}
+{% block title %}Annonces{% endblock %}
 {% block admin %}
-<form class="d-flex gap-2 mb-3 flex-wrap"><input class="form-control" style="max-width:280px" name="q" value="{{ q }}" placeholder="Titre ou vendeur">
-  <select class="form-select" style="max-width:200px" name="statut"><option value="">Tous statuts</option>{% for v, l in statuses %}<option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
-  <button class="btn btn-outline-secondary">Filtrer</button></form>
-<div class="table-responsive"><table class="table table-sm align-middle bg-white">
-  <thead><tr><th>Annonce</th><th>Vendeur</th><th>Prix</th><th>Stock</th><th>Statut</th><th>Créée</th><th></th></tr></thead>
+<div class="adm-head"><div><div class="adm-crumb">Catalogue</div><h1>Annonces</h1><p>{{ page.paginator.count }} annonce{{ page.paginator.count|pluralize }}{% if q %} pour « {{ q }} »{% endif %}</p></div>
+  <form class="d-flex gap-2"><input type="hidden" name="statut" value="{{ status }}"><input class="form-control" style="width:240px" name="q" value="{{ q }}" placeholder="Titre ou vendeur"><button class="btn btn-adm">Rechercher</button></form></div>
+<div class="adm-tools">
+  <a class="adm-chip {% if not status %}on{% endif %}" href="?{% if q %}q={{ q|urlencode }}{% endif %}">Toutes</a>
+  {% for v, l in statuses %}<a class="adm-chip {% if status == v %}on{% endif %}" href="?statut={{ v }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}">{{ l }}</a>{% endfor %}
+</div>
+<div class="adm-card flush"><div class="table-responsive"><table class="adm-table">
+  <thead><tr><th>Annonce</th><th>Vendeur</th><th>Prix</th><th>Stock</th><th>Statut</th><th>Créée le</th><th></th></tr></thead>
   <tbody>{% for l in page %}<tr>
-    <td><a href="{{ l.get_absolute_url }}">{{ l.title|truncatechars:50 }}</a></td><td>@{{ l.seller.username }}</td><td>{{ l.price|xof }}</td><td>{{ l.quantity }}</td><td>{{ l.get_status_display }}</td><td class="small">{{ l.created_at|date:"d/m/Y" }}</td>
-    <td class="d-flex gap-1">
-      {% if l.status == "suspended" %}<form method="post" action="{% url 'moderation:listing_action' l.pk 'retablir' %}">{% csrf_token %}<button class="btn btn-sm btn-outline-success">Rétablir</button></form>
-      {% elif l.status != "deleted" %}<form method="post" action="{% url 'moderation:listing_action' l.pk 'suspendre' %}">{% csrf_token %}<button class="btn btn-sm btn-outline-warning">Suspendre</button></form>{% endif %}
-      {% if l.status != "deleted" %}<form method="post" action="{% url 'moderation:listing_action' l.pk 'supprimer' %}" onsubmit="return confirm('Supprimer ?')">{% csrf_token %}<button class="btn btn-sm btn-outline-danger">Supprimer</button></form>{% endif %}
-    </td></tr>{% empty %}<tr><td colspan="7" class="text-muted">Aucune annonce.</td></tr>{% endfor %}</tbody>
-</table></div>
+    <td><div class="adm-item">{% if l.cover %}<img class="adm-thumb" src="{{ l.cover.image.url }}" alt="">{% else %}<span class="adm-thumb"><i class="bi bi-image"></i></span>{% endif %}<div><a href="{{ l.get_absolute_url }}"><b>{{ l.title|truncatechars:50 }}</b></a><small>{{ l.category.name }}</small></div></div></td>
+    <td>@{{ l.seller.username }}</td><td class="num">{{ l.price|xof }}</td><td>{{ l.quantity }}</td>
+    <td><span class="adm-tag {{ l.status|status_class }}">{{ l.get_status_display }}</span></td><td class="dim">{{ l.created_at|date:"d/m/Y" }}</td>
+    <td><div class="acts">
+      {% if l.status == "suspended" %}<form method="post" action="{% url 'moderation:listing_action' l.pk 'retablir' %}">{% csrf_token %}<button class="btn btn-sm btn-ghost ok">Rétablir</button></form>
+      {% elif l.status != "deleted" %}<form method="post" action="{% url 'moderation:listing_action' l.pk 'suspendre' %}">{% csrf_token %}<button class="btn btn-sm btn-ghost">Suspendre</button></form>{% endif %}
+      {% if l.status != "deleted" %}<form method="post" action="{% url 'moderation:listing_action' l.pk 'supprimer' %}" onsubmit="return confirm('Supprimer ?')">{% csrf_token %}<button class="btn btn-sm btn-ghost danger">Supprimer</button></form>{% endif %}
+    </div></td></tr>{% empty %}<tr><td colspan="7" class="adm-empty">Aucune annonce.</td></tr>{% endfor %}</tbody>
+</table></div></div>
 {% include "partials/pagination.html" %}
 {% endblock %}
