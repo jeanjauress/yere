@@ -1,17 +1,17 @@
-{% extends "moderation/base.html" %}
+{% extends "moderation/base.html" %}{% load admin_ui %}
+{% block title %}Signalement #{{ report.pk }}{% endblock %}
 {% block admin %}
-<div class="row g-3" style="max-width: 1000px">
-  <div class="col-md-6"><div class="card card-body">
-    <h1 class="h5 fw-bold">Signalement #{{ report.pk }}</h1>
-    <dl class="small mb-0">
-      <dt>Motif</dt><dd>{{ report.get_reason_display }}</dd>
+<div class="adm-head"><div><div class="adm-crumb"><a href="{% url 'moderation:reports' %}">Signalements</a> › #{{ report.pk }}</div><h1>{{ report.get_reason_display }}</h1>
+  <p>Signalé par {{ report.reporter.username|default:"—" }} le {{ report.created_at|date:"d/m/Y à H:i" }} · <span class="adm-tag {{ report.status|status_class }}">{{ report.get_status_display }}</span></p></div></div>
+<div class="row g-3" style="max-width:1100px">
+  <div class="col-lg-7"><div class="adm-card h-100">
+    <dl class="adm-dl mb-0">
       <dt>Précisions</dt><dd>{{ report.details|default:"—"|linebreaksbr }}</dd>
-      <dt>Signalé par</dt><dd>{{ report.reporter.username|default:"—" }} le {{ report.created_at|date:"d/m/Y H:i" }}</dd>
-      {% if report.listing %}<dt>Annonce</dt><dd><a href="{{ report.listing.get_absolute_url }}" target="_blank">{{ report.listing.title }}</a> ({{ report.listing.get_status_display }}) — vendeur @{{ report.listing.seller.username }}</dd>{% endif %}
-      {% if report.reported_user %}<dt>Compte</dt><dd><a href="{% url 'accounts:profile' report.reported_user.username %}" target="_blank">@{{ report.reported_user.username }}</a>{% if report.reported_user.is_suspended %} <span class="badge text-bg-danger">suspendu</span>{% endif %} · {{ report.reported_user.reports_received.count }} signalement(s) au total</dd>{% endif %}
-      <dt>Statut</dt><dd>{{ report.get_status_display }}{% if report.decision %} — {{ report.decision }}{% endif %}</dd>
+      {% if report.listing %}<dt>Annonce</dt><dd><div class="adm-item mt-1">{% if report.listing.cover %}<img class="adm-thumb" src="{{ report.listing.cover.image.url }}" alt="">{% endif %}<div><a href="{{ report.listing.get_absolute_url }}" target="_blank"><b>{{ report.listing.title }}</b></a><small>{{ report.listing.get_status_display }} · vendeur @{{ report.listing.seller.username }}</small></div></div></dd>{% endif %}
+      {% if report.reported_user %}<dt>Compte</dt><dd><a href="{% url 'accounts:profile' report.reported_user.username %}" target="_blank">@{{ report.reported_user.username }}</a>{% if report.reported_user.is_suspended %} <span class="adm-tag bad">suspendu</span>{% endif %} · {{ report.reported_user.reports_received.count }} signalement(s) au total</dd>{% endif %}
+      {% if report.decision %}<dt>Décision</dt><dd>{{ report.decision }}</dd>{% endif %}
     </dl>
   </div></div>
-  <div class="col-md-6"><form method="post" class="card card-body">{% csrf_token %}<h2 class="h6 fw-bold">Décision</h2>{% include "partials/form_fields.html" %}<button class="btn btn-brand">Appliquer</button></form></div>
+  <div class="col-lg-5"><form method="post" class="adm-card h-100">{% csrf_token %}<div class="adm-card-head"><h2>Décision</h2></div>{% include "partials/form_fields.html" %}<button class="btn btn-adm w-100">Appliquer</button></form></div>
 </div>
 {% endblock %}

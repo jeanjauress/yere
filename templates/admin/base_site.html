@@ -1,0 +1,26 @@
+{% extends "admin/base.html" %}{% load i18n static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{# Thème « Ivoire & Émeraude » : un seul thème clair, cohérent avec l'espace /moderation/. #}
+{% block dark-mode-vars %}{% endblock %}
+
+{% block extrastyle %}{{ block.super }}
+<link rel="preload" href="{% static 'vendor/fonts/fraunces-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{% static 'vendor/fonts/inter-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{% static 'css/django-admin.css' %}">
+<link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+{% endblock %}
+
+{% block branding %}
+<div id="site-name"><a href="{% url 'admin:index' %}"><span class="yere-mark">{{ site_title|first }}</span><span>{{ site_title }}<small>Administration avancée</small></span></a></div>
+{% endblock %}
+
+{% block userlinks %}
+  {% if user.is_active and user.is_staff %}<a href="{% url 'moderation:dashboard' %}">Tableau de bord</a> /{% endif %}
+  {% if site_url %}<a href="{{ site_url }}">{% translate 'View site' %}</a> /{% endif %}
+  {% if user.has_usable_password %}<a href="{% url 'admin:password_change' %}">{% translate 'Change password' %}</a> /{% endif %}
+  <form id="logout-form" method="post" action="{% url 'admin:logout' %}">{% csrf_token %}<button type="submit">{% translate 'Log out' %}</button></form>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

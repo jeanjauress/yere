@@ -1,17 +1,56 @@
-{% extends "base.html" %}
-{% block title %}Administration — {{ SITE_NAME }}{% endblock %}
-{% block content %}
-<div class="container-fluid mt-3 px-lg-4">
-  <ul class="nav nav-pills mb-3 flex-nowrap scroll-x">
-    {% url 'moderation:dashboard' as u %}<li class="nav-item"><a class="nav-link {% if request.path == u %}active bg-brand{% endif %}" href="{{ u }}">Statistiques</a></li>
-    {% url 'moderation:reports' as u %}<li class="nav-item"><a class="nav-link {% if u in request.path %}active bg-brand{% endif %}" href="{{ u }}">Signalements</a></li>
-    {% url 'moderation:listings' as u %}<li class="nav-item"><a class="nav-link {% if u in request.path %}active bg-brand{% endif %}" href="{{ u }}">Annonces</a></li>
-    {% url 'moderation:users' as u %}<li class="nav-item"><a class="nav-link {% if u in request.path %}active bg-brand{% endif %}" href="{{ u }}">Utilisateurs</a></li>
-    {% url 'moderation:orders' as u %}<li class="nav-item"><a class="nav-link {% if u in request.path %}active bg-brand{% endif %}" href="{{ u }}">Commandes</a></li>
-    {% url 'moderation:reviews' as u %}<li class="nav-item"><a class="nav-link {% if u in request.path %}active bg-brand{% endif %}" href="{{ u }}">Avis</a></li>
-    {% url 'moderation:audit' as u %}<li class="nav-item"><a class="nav-link {% if u in request.path %}active bg-brand{% endif %}" href="{{ u }}">Journal</a></li>
-    {% if user.is_superuser or user.role == "admin" %}<li class="nav-item"><a class="nav-link" href="/{{ ADMIN_URL }}">Admin Django <i class="bi bi-box-arrow-up-right"></i></a></li>{% endif %}
-  </ul>
-  {% block admin %}{% endblock %}
+{% load static %}<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{% block title %}Administration{% endblock %} — {{ SITE_NAME }}</title>
+  <link rel="preload" href="{% static 'vendor/fonts/fraunces-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{% static 'vendor/fonts/inter-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/app.css' %}" rel="stylesheet">
+  <link href="{% static 'css/admin.css' %}" rel="stylesheet">
+  <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+</head>
+<body class="adm">
+<div class="adm-shell">
+  <aside class="adm-side offcanvas-lg offcanvas-start" tabindex="-1" id="adm-side" aria-label="Menu d'administration">
+    <div class="offcanvas-body">
+      <a class="adm-brand" href="{% url 'moderation:dashboard' %}"><span class="adm-brand-mark">{{ SITE_NAME|first }}</span><span><b>{{ SITE_NAME }}</b><small>Administration</small></span></a>
+      <div class="adm-sec">Pilotage</div>
+      {% url 'moderation:dashboard' as u %}<a class="adm-nav {% if request.path == u %}on{% endif %}" href="{{ u }}"><i class="bi bi-speedometer2"></i>Tableau de bord</a>
+      {% url 'moderation:reports' as u %}<a class="adm-nav {% if u in request.path %}on{% endif %}" href="{{ u }}"><i class="bi bi-flag"></i>Signalements{% if open_reports_count %}<span class="adm-count">{{ open_reports_count }}</span>{% endif %}</a>
+      <div class="adm-sec">Catalogue</div>
+      {% url 'moderation:listings' as u %}<a class="adm-nav {% if u in request.path %}on{% endif %}" href="{{ u }}"><i class="bi bi-bag"></i>Annonces</a>
+      {% url 'moderation:orders' as u %}<a class="adm-nav {% if u in request.path %}on{% endif %}" href="{{ u }}"><i class="bi bi-bag-check"></i>Commandes</a>
+      {% url 'moderation:reviews' as u %}<a class="adm-nav {% if u in request.path %}on{% endif %}" href="{{ u }}"><i class="bi bi-star"></i>Avis</a>
+      <div class="adm-sec">Communauté</div>
+      {% url 'moderation:users' as u %}<a class="adm-nav {% if u in request.path %}on{% endif %}" href="{{ u }}"><i class="bi bi-people"></i>Utilisateurs</a>
+      {% url 'moderation:audit' as u %}<a class="adm-nav {% if u in request.path %}on{% endif %}" href="{{ u }}"><i class="bi bi-journal-text"></i>Journal d'audit</a>
+      {% if user.is_platform_admin %}<div class="adm-sec">Système</div>
+      <a class="adm-nav" href="/{{ ADMIN_URL }}"><i class="bi bi-database-gear"></i>Admin avancée</a>{% endif %}
+      <div class="adm-me">
+        {% if user.profile_image %}<img src="{{ user.profile_image.url }}" class="adm-av" alt="">{% else %}<span class="adm-av">{{ user.username|slice:":2" }}</span>{% endif %}
+        <div class="text-truncate"><b>{{ user.get_full_name|default:user.username }}</b><small>{% if user.is_platform_admin %}Administrateur{% else %}Modérateur{% endif %}</small></div>
+        <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="btn btn-link p-0 text-secondary" title="Déconnexion" aria-label="Déconnexion"><i class="bi bi-box-arrow-right"></i></button></form>
+      </div>
+    </div>
+  </aside>
+
+  <main class="adm-main">
+    <div class="adm-top">
+      <button class="adm-iconbtn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#adm-side" aria-label="Menu"><i class="bi bi-list"></i></button>
+      <form class="adm-search" action="{% url 'moderation:listings' %}" role="search"><i class="bi bi-search"></i><input type="search" name="q" placeholder="Rechercher une annonce ou un vendeur…" aria-label="Rechercher"></form>
+      <span class="flex-grow-1"></span>
+      <a class="btn btn-ghost d-none d-sm-inline-flex align-items-center gap-2" href="{% url 'listings:home' %}"><i class="bi bi-box-arrow-up-right"></i>Voir le site</a>
+    </div>
+    {% for m in messages %}
+    <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} alert-dismissible fade show" role="alert">{{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button></div>
+    {% endfor %}
+    {% block admin %}{% endblock %}
+  </main>
 </div>
-{% endblock %}
+<script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

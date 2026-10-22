@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
 from django.db.models import Count, Q, Sum
+from django.db.models.functions import TruncDate
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -55,6 +56,36 @@ def _report(request, back, listing=None, reported_user=None):
 
 # --- Côté administration ---
 
+STATUS_COLORS = {
+    "delivered": "var(--adm-accent)", "shipped": "var(--adm-gold)", "preparing": "#7c9a8e",
+    "confirmed": "#8aa0b8", "pending": "#b9b2a3", "cancelled": "var(--adm-danger)", "refunded": "#a08abf",
+}
+
+
+def _daily_chart(orders, days=14):
+    """Commandes et volume par jour, prêts à dessiner en SVG (viewBox 640 x 200)."""
+    start = timezone.localdate() - timedelta(days=days - 1)
+    rows = (orders.filter(created_at__date__gte=start).annotate(day=TruncDate("created_at"))
+            .values("day").annotate(n=Count("id"), gmv=Sum("total_amount")))
+    by_day = {r["day"]: r for r in rows}
+    data = [(start + timedelta(days=i), by_day.get(start + timedelta(days=i), {})) for i in range(days)]
+    max_n = max([r.get("n", 0) for _, r in data] + [1])
+    max_gmv = max([r.get("gmv") or 0 for _, r in data] + [1])
+    width, height, pad, top = 640, 200, 8, 12
+    slot = (width - 2 * pad) / days
+    bars, points = [], []
+    for i, (day, r) in enumerate(data):
+        n, gmv = r.get("n", 0), r.get("gmv") or 0
+        h = n / max_n * (height - top - 24)
+        cx = pad + slot * i + slot / 2
+        bars.append({"x": round(cx - slot * .28, 1), "y": round(height - 24 - h, 1), "w": round(slot * .56, 1),
+                     "h": round(h, 1), "cx": round(cx, 1), "day": day, "n": n, "gmv": gmv,
+                     "last": i == days - 1, "label": i % 2 == (days - 1) % 2})
+        points.append(f"{cx:.1f},{height - 24 - gmv / max_gmv * (height - top - 24):.1f}")
+    return {"bars": bars, "line": " ".join(points), "width": width, "height": height,
+            "total": sum(b["n"] for b in bars), "gmv": sum(b["gmv"] for b in bars)}
+
+
 @staff_required
 def dashboard(request):
     since = timezone.now() - timedelta(days=30)
@@ -71,12 +102,19 @@ def dashboard(request):
         "suspended_users": User.objects.filter(is_suspended=True).count(),
         "suspended_listings": Listing.objects.filter(status=Listing.Status.SUSPENDED).count(),
     }
-    by_status = Order.objects.values("status").annotate(n=Count("id")).order_by("status")
+    counts = dict(Order.objects.values_list("status").annotate(n=Count("id")))
+    total = sum(counts.values()) or 1
+    by_status = [{"label": label, "n": counts[value], "pct": round(counts[value] * 100 / total),
+                  "color": STATUS_COLORS.get(value, "var(--adm-muted)")}
+                 for value, label in Order.Status.choices if counts.get(value)]
+    delivered = counts.get(Order.Status.DELIVERED, 0)
     return render(request, "moderation/dashboard.html", {
-        "stats": stats, "by_status": [(Order.Status(r["status"]).label, r["n"]) for r in by_status],
-        "reports": Report.objects.filter(status=Report.Status.OPEN).select_related("reporter", "listing",
-                                                                                   "reported_user")[:10],
-        "logs": AuditLog.objects.select_related("actor")[:10],
+        "stats": stats, "by_status": by_status, "chart": _daily_chart(orders),
+        "delivery_rate": round(delivered * 100 / total, 1) if counts else None,
+        "reports": Report.objects.filter(status=Report.Status.OPEN)
+                                 .select_related("reporter", "listing", "reported_user")
+                                 .prefetch_related("listing__images")[:6],
+        "logs": AuditLog.objects.select_related("actor")[:6],
     })
 
 
@@ -134,7 +172,7 @@ def _suspend_user(request, user, note=""):
 def listings(request):
     q = request.GET.get("q", "")
     status = request.GET.get("statut", "")
-    qs = Listing.objects.select_related("seller", "category")
+    qs = Listing.objects.select_related("seller", "category").prefetch_related("images")
     if q:
         qs = qs.filter(Q(title__icontains=q) | Q(seller__username__icontains=q))
     if status in Listing.Status.values:

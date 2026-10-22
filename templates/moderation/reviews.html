@@ -1,9 +1,11 @@
 {% extends "moderation/base.html" %}{% load market %}
+{% block title %}Avis{% endblock %}
 {% block admin %}
-<div class="table-responsive"><table class="table table-sm align-middle bg-white">
+<div class="adm-head"><div><div class="adm-crumb">Catalogue</div><h1>Avis</h1><p>{{ page.paginator.count }} avis laissé{{ page.paginator.count|pluralize }} par les acheteurs</p></div></div>
+<div class="adm-card flush"><div class="table-responsive"><table class="adm-table">
   <thead><tr><th>Date</th><th>Auteur</th><th>Vendeur</th><th>Note</th><th>Commentaire</th><th></th></tr></thead>
-  <tbody>{% for r in page %}<tr class="{% if r.is_hidden %}text-muted{% endif %}"><td class="small">{{ r.created_at|date:"d/m/Y" }}</td><td>@{{ r.author.username }}</td><td>@{{ r.seller.username }}</td><td class="stars">{{ r.rating|stars }}</td><td class="small">{{ r.comment|truncatechars:120 }}</td>
-    <td><form method="post" action="{% url 'moderation:review_toggle' r.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary">{% if r.is_hidden %}Afficher{% else %}Masquer{% endif %}</button></form></td></tr>{% empty %}<tr><td colspan="6" class="text-muted">Aucun avis.</td></tr>{% endfor %}</tbody>
-</table></div>
+  <tbody>{% for r in page %}<tr class="{% if r.is_hidden %}muted{% endif %}"><td class="dim">{{ r.created_at|date:"d/m/Y" }}</td><td>@{{ r.author.username }}</td><td>@{{ r.seller.username }}</td><td class="stars text-nowrap">{{ r.rating|stars }}</td><td class="small">{{ r.comment|truncatechars:120 }}{% if r.is_hidden %} <span class="adm-tag">masqué</span>{% endif %}</td>
+    <td><div class="acts"><form method="post" action="{% url 'moderation:review_toggle' r.pk %}">{% csrf_token %}<button class="btn btn-sm btn-ghost">{% if r.is_hidden %}Afficher{% else %}Masquer{% endif %}</button></form></div></td></tr>{% empty %}<tr><td colspan="6" class="adm-empty">Aucun avis.</td></tr>{% endfor %}</tbody>
+</table></div></div>
 {% include "partials/pagination.html" %}
 {% endblock %}
