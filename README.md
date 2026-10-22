@@ -96,6 +96,22 @@ docs/           documentation technique, schéma de base, guide d'utilisation, s
 - [docs/SAUVEGARDE.md](docs/SAUVEGARDE.md) — procédure de sauvegarde et de restauration.
 - [docs/GUIDE_UTILISATEUR.md](docs/GUIDE_UTILISATEUR.md) — guide pour les utilisateurs et les modérateurs.
 
+## Déploiement sur Render
+
+Le fichier `render.yaml` décrit le service : Dashboard Render → **New → Blueprint** → choisir ce dépôt.
+
+- Plan **Starter** avec un **disque persistant** de 1 Go monté sur `/var/data` : base SQLite, photos,
+  sauvegardes, journaux et cache y sont stockés. Sans disque (plan gratuit), tout est effacé à chaque
+  redémarrage ou déploiement.
+- `build.sh` installe les dépendances et collecte les fichiers statiques (servis par WhiteNoise).
+- `start.sh` applique les migrations puis lance gunicorn (le disque n'est monté qu'au démarrage).
+- `DJANGO_SECRET_KEY` est générée par Render ; `DJANGO_ADMIN_URL` est demandée à la création.
+  Le nom d'hôte `*.onrender.com` est ajouté automatiquement à `ALLOWED_HOSTS` et `CSRF_TRUSTED_ORIGINS`.
+- Créer le premier compte administrateur depuis l'onglet **Shell** du service :
+  `python manage.py createsuperuser`.
+- Pour un nom de domaine personnalisé, l'ajouter dans Render puis dans `DJANGO_ALLOWED_HOSTS`,
+  `DJANGO_CSRF_TRUSTED_ORIGINS` et `SITE_URL`.
+
 ## Reste à faire avant la mise en production
 
 - Choisir le nom et l'identité visuelle, compléter les pages légales (modèles fournis, à valider par un juriste ;

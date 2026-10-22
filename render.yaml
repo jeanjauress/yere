@@ -1,0 +1,39 @@
+# Blueprint Render : Dashboard → New → Blueprint → choisir ce dépôt.
+services:
+  - type: web
+    name: yere
+    runtime: python
+    region: frankfurt
+    plan: starter            # requis pour le disque persistant (SQLite + photos)
+    branch: main
+    buildCommand: ./build.sh
+    startCommand: ./start.sh
+    disk:
+      name: yere-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.1"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: DJANGO_ADMIN_URL
+        sync: false          # à saisir à la création, ex. un-chemin-secret/
+      - key: SITE_NAME
+        value: Yere
+      - key: SQLITE_PATH
+        value: /var/data/db.sqlite3
+      - key: MEDIA_ROOT
+        value: /var/data/media
+      - key: BACKUP_DIR
+        value: /var/data/backups
+      - key: LOG_DIR
+        value: /var/data/logs
+      - key: CACHE_DIR
+        value: /var/data/cache
+      - key: SERVE_MEDIA
+        value: "true"
+      - key: WEB_CONCURRENCY
+        value: "2"
