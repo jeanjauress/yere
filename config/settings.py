@@ -20,9 +20,16 @@ SECRET_KEY = os.environ.get(
 DEBUG = env_bool("DJANGO_DEBUG", True)
 ALLOWED_HOSTS = [h for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h]
 CSRF_TRUSTED_ORIGINS = [o for o in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o]
+# Render fournit le nom d'hôte public du service (xxx.onrender.com).
+RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
 
 SITE_NAME = os.environ.get("SITE_NAME", "Yere")
-SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000")
+SITE_URL = os.environ.get(
+    "SITE_URL", f"https://{RENDER_EXTERNAL_HOSTNAME}" if RENDER_EXTERNAL_HOSTNAME else "http://localhost:8000"
+)
 # URL de l'administration Django, distincte des pages utilisateurs.
 ADMIN_URL = os.environ.get("DJANGO_ADMIN_URL", "gestion-admin/")
 
@@ -47,6 +54,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -112,7 +120,13 @@ AUTH_PASSWORD_VALIDATORS = [
 LOGIN_MAX_ATTEMPTS = int(os.environ.get("LOGIN_MAX_ATTEMPTS", 5))
 LOGIN_LOCKOUT_SECONDS = int(os.environ.get("LOGIN_LOCKOUT_SECONDS", 15 * 60))
 
-CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+# Cache sur fichiers si CACHE_DIR est défini : partagé entre les processus gunicorn
+# (nécessaire pour que la limitation des connexions compte toutes les tentatives).
+CACHE_DIR = os.environ.get("CACHE_DIR")
+if CACHE_DIR:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.filebased.FileBasedCache", "LOCATION": CACHE_DIR}}
+else:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
 LANGUAGE_CODE = "fr"
 TIME_ZONE = "Africa/Abidjan"
@@ -124,6 +138,16 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", BASE_DIR / "media"))
+# Sans serveur web devant Django (Render), Django sert lui-même les photos.
+SERVE_MEDIA = env_bool("SERVE_MEDIA", False)
+# Fichiers statiques servis par WhiteNoise, compressés et versionnés.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        if not DEBUG else "django.contrib.staticfiles.storage.StaticFilesStorage"
+    },
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -164,6 +188,15 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 
+# Journal d'erreurs sur fichier ; ignoré si le dossier n'est pas accessible
+# (par exemple pendant la construction sur Render, avant le montage du disque).
+LOG_DIR = Path(os.environ.get("LOG_DIR", BASE_DIR / "var"))
+try:
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    LOG_HANDLERS = ["console", "file"]
+except OSError:
+    LOG_HANDLERS = ["console"]
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -171,12 +204,13 @@ LOGGING = {
         "console": {"class": "logging.StreamHandler"},
         "file": {
             "class": "logging.FileHandler",
-            "filename": BASE_DIR / "var" / "errors.log",
+            "filename": LOG_DIR / "errors.log",
+            "delay": True,
             "level": "ERROR",
         },
     },
     "root": {"handlers": ["console"], "level": "WARNING"},
     "loggers": {
-        "django": {"handlers": ["console", "file"], "level": "WARNING", "propagate": False},
+        "django": {"handlers": LOG_HANDLERS, "level": "WARNING", "propagate": False},
     },
 }
